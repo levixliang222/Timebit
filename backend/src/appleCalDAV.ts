@@ -24,11 +24,25 @@ export interface CalDAVEvent {
   url?: string;
 }
 
-// In-memory credential store (swap for DB in production)
+// Credential store — seeded from env vars on startup, overridable at runtime
+// Env var format: APPLE_CRED_<memberId>=appleId|||appPassword[|||displayName]
 const credStore = new Map<string, AppleCredentials & { client?: DAVClient }>();
+
+(function loadFromEnv() {
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!key.startsWith('APPLE_CRED_') || !value) continue;
+    const memberId = key.slice('APPLE_CRED_'.length).toLowerCase();
+    const [appleId, appPassword, displayName] = value.split('|||');
+    if (appleId && appPassword) {
+      credStore.set(memberId, { appleId, appPassword, displayName });
+    }
+  }
+})();
 
 export function saveAppleCredentials(memberId: string, creds: AppleCredentials) {
   credStore.set(memberId, { ...creds, client: undefined });
+  // Hint for making the connection permanent
+  console.log(`[Apple] To persist: add env var APPLE_CRED_${memberId}=${creds.appleId}|||${creds.appPassword}${creds.displayName ? '|||' + creds.displayName : ''}`);
 }
 
 export function getAppleCredentials(memberId: string): AppleCredentials | null {
