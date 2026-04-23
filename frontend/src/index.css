@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* FullCalendar overrides */
+.fc .fc-toolbar-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.fc .fc-button {
+  background-color: #6366f1 !important;
+  border-color: #6366f1 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  text-transform: capitalize !important;
+}
+.fc .fc-button:hover {
+  background-color: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+}
+.fc .fc-button-active {
+  background-color: #4338ca !important;
+  border-color: #4338ca !important;
+}
+.fc-event {
+  border-radius: 4px !important;
+  border: none !important;
+  padding: 2px 5px !important;
+  font-size: 0.78rem !important;
+  cursor: pointer;
+}
+.fc-daygrid-day-number {
+  font-size: 0.85rem;
+  color: #475569;
+}
+.fc-col-header-cell-cushion {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fc-daygrid-day.fc-day-today {
+  background: #eef2ff !important;
+}
+.fc-timegrid-slot {
+  height: 2rem !important;
+}
