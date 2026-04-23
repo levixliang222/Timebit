@@ -3,7 +3,6 @@ import { format, parseISO, differenceInMinutes } from 'date-fns';
 import Sidebar from './components/Sidebar';
 import CalendarView from './components/CalendarView';
 import VoiceButton from './components/VoiceButton';
-import AvailabilityChecker from './components/AvailabilityChecker';
 import SmartReminders from './components/SmartReminders';
 import EventModal from './components/EventModal';
 import AddEventModal from './components/AddEventModal';
@@ -41,6 +40,7 @@ export default function App() {
   const [reminders, setReminders] = useState(initialReminders);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
+  const [showReminders, setShowReminders] = useState(false);
   const [schedulingActivity, setSchedulingActivity] = useState<RoutineActivity | null>(null);
   const [appleConnectingMember, setAppleConnectingMember] = useState<FamilyMember | null>(null);
 
@@ -102,6 +102,9 @@ export default function App() {
   const handleAddEvent = (newEvent: Omit<CalendarEvent, 'id'>) =>
     setEvents(prev => [...prev, { ...newEvent, id: `e${Date.now()}` }]);
 
+  const handleDeleteEvent = (id: string) =>
+    setEvents(prev => prev.filter(e => e.id !== id));
+
   const eventCalendars = [
     ...calendarSources,
     ...googleCalendars.filter(gc => !calendarSources.some(c => c.id === gc.id)),
@@ -111,7 +114,7 @@ export default function App() {
   const appleConnectedIds = appleConns.map(c => c.memberId);
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden" onClick={() => setShowReminders(false)}>
       <Sidebar
         members={familyMembers}
         calendars={allCalendars}
@@ -143,7 +146,7 @@ export default function App() {
                   {googleEvents.length > 0 && <span className="ml-1 text-emerald-500">· {googleEvents.length} from Google</span>}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {familyMembers.filter(m => activeMemberIds.includes(m.id)).map(m => (
                     <div key={m.id} className="w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-sm"
@@ -152,6 +155,24 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+                <VoiceButton compact onTranscript={text => setPendingTranscript(text)} />
+                <div className="relative">
+                  <button
+                    onClick={e => { e.stopPropagation(); setShowReminders(v => !v); }}
+                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    ✨ Reminders
+                    {reminders.length > 0 && (
+                      <span className="bg-indigo-600 text-white rounded-full px-1.5 py-0.5 text-[10px] leading-none">{reminders.length}</span>
+                    )}
+                  </button>
+                  {showReminders && (
+                    <div className="absolute right-0 top-full mt-2 w-80 z-40 shadow-xl rounded-xl overflow-hidden border border-slate-200" onClick={e => e.stopPropagation()}>
+                      <SmartReminders reminders={reminders}
+                        onDismiss={id => setReminders(prev => prev.filter(r => r.id !== id))} />
+                    </div>
+                  )}
+                </div>
                 <button onClick={() => setPendingTranscript('')}
                   className="bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors">
                   + Add Event
@@ -159,24 +180,9 @@ export default function App() {
               </div>
             </header>
 
-            <div className="flex-1 flex gap-4 p-4 overflow-hidden">
-              <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <CalendarView events={visibleEvents} completedIds={completedIds}
-                  onEventClick={setSelectedEvent} onToggleComplete={handleToggleComplete} />
-              </div>
-              <div className="w-72 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-2 w-full">
-                    <span className="text-lg">🎙</span>
-                    <h2 className="font-semibold text-slate-800 text-sm m-0">Voice Add</h2>
-                  </div>
-                  <p className="text-xs text-slate-400 text-center m-0">Press and speak to add an event naturally</p>
-                  <VoiceButton onTranscript={text => setPendingTranscript(text)} />
-                </div>
-                <AvailabilityChecker events={visibleEvents} />
-                <SmartReminders reminders={reminders}
-                  onDismiss={id => setReminders(prev => prev.filter(r => r.id !== id))} />
-              </div>
+            <div className="flex-1 flex flex-col p-4 overflow-hidden min-h-0">
+              <CalendarView events={visibleEvents} completedIds={completedIds}
+                onEventClick={setSelectedEvent} onToggleComplete={handleToggleComplete} />
             </div>
           </>
         ) : (
@@ -185,7 +191,7 @@ export default function App() {
       </div>
 
       {selectedEvent && (
-        <EventModal event={selectedEvent} calendars={eventCalendars} members={familyMembers} onClose={() => setSelectedEvent(null)} />
+        <EventModal event={selectedEvent} calendars={eventCalendars} members={familyMembers} onClose={() => setSelectedEvent(null)} onDelete={handleDeleteEvent} />
       )}
       {pendingTranscript !== null && (
         <AddEventModal transcriptText={pendingTranscript || undefined} calendars={eventCalendars}

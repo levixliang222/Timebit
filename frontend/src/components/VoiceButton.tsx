@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 
 interface VoiceButtonProps {
   onTranscript: (text: string) => void;
+  compact?: boolean;
 }
 
 type RecordState = 'idle' | 'recording' | 'processing';
 
-export default function VoiceButton({ onTranscript }: VoiceButtonProps) {
+export default function VoiceButton({ onTranscript, compact }: VoiceButtonProps) {
   const [state, setState] = useState<RecordState>('idle');
   const [transcript, setTranscript] = useState('');
   const [supported, setSupported] = useState(true);
@@ -71,6 +72,29 @@ export default function VoiceButton({ onTranscript }: VoiceButtonProps) {
         <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-3xl opacity-50">🎙</div>
         <p className="text-xs text-slate-400 text-center">Voice not supported<br />in this browser</p>
       </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <button
+        onClick={handlePress}
+        disabled={state === 'processing'}
+        className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
+          state === 'recording'
+            ? 'bg-red-500 text-white'
+            : state === 'processing'
+            ? 'bg-indigo-400 text-white cursor-not-allowed'
+            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+        }`}
+        aria-label={label}
+      >
+        {state === 'recording' && (
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+        )}
+        <span>{state === 'processing' ? '⏳' : '🎙'}</span>
+        <span>{state === 'recording' ? 'Stop' : state === 'processing' ? 'Thinking…' : 'Voice Add'}</span>
+      </button>
     );
   }
 

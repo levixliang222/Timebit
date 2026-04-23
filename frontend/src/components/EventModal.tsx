@@ -6,9 +6,10 @@ interface EventModalProps {
   calendars: CalendarSource[];
   members: FamilyMember[];
   onClose: () => void;
+  onDelete: (id: string) => void;
 }
 
-export default function EventModal({ event, calendars, members, onClose }: EventModalProps) {
+export default function EventModal({ event, calendars, members, onClose, onDelete }: EventModalProps) {
   if (!event) return null;
 
   const calendar = calendars.find(c => c.id === event.calendarId);
@@ -73,7 +74,10 @@ export default function EventModal({ event, calendars, members, onClose }: Event
           <button className="flex-1 text-sm border border-slate-200 rounded-lg py-2 text-slate-600 hover:bg-slate-50 transition-colors">
             Edit
           </button>
-          <button className="flex-1 text-sm bg-red-50 border border-red-200 rounded-lg py-2 text-red-600 hover:bg-red-100 transition-colors">
+          <button
+            onClick={() => { onDelete(event.id); onClose(); }}
+            className="flex-1 text-sm bg-red-50 border border-red-200 rounded-lg py-2 text-red-600 hover:bg-red-100 transition-colors"
+          >
             Delete
           </button>
           <button
