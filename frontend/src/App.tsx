@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format, parseISO, differenceInMinutes } from 'date-fns';
 import Sidebar from './components/Sidebar';
 import CalendarView from './components/CalendarView';
@@ -36,13 +36,22 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('calendar');
   const [activeMemberIds, setActiveMemberIds] = useState(familyMembers.map(m => m.id));
   const [activeCalendarIds, setActiveCalendarIds] = useState(calendarSources.map(c => c.id));
-  const [events, setEvents] = useState<CalendarEvent[]>(mockEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>(() => {
+    try {
+      const saved = localStorage.getItem('timebit_events');
+      return saved ? JSON.parse(saved) : mockEvents;
+    } catch { return mockEvents; }
+  });
   const [reminders, setReminders] = useState(initialReminders);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
   const [showReminders, setShowReminders] = useState(false);
   const [schedulingActivity, setSchedulingActivity] = useState<RoutineActivity | null>(null);
   const [appleConnectingMember, setAppleConnectingMember] = useState<FamilyMember | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('timebit_events', JSON.stringify(events));
+  }, [events]);
 
   const { connections: googleConns, googleEvents, googleCalendars, loading: googleLoading, connect: googleConnect, disconnect: googleDisconnect } = useGoogleCalendar();
   const { connections: appleConns, connect: appleConnect, disconnect: appleDisconnect } = useAppleCalendar();
