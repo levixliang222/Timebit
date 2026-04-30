@@ -45,6 +45,7 @@ export default function App() {
   const [reminders, setReminders] = useState(initialReminders);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
+  const [pendingDate, setPendingDate] = useState<{ start: string; end: string } | null>(null);
   const [showReminders, setShowReminders] = useState(false);
   const [schedulingActivity, setSchedulingActivity] = useState<RoutineActivity | null>(null);
   const [appleConnectingMember, setAppleConnectingMember] = useState<FamilyMember | null>(null);
@@ -191,7 +192,8 @@ export default function App() {
 
             <div className="flex-1 flex flex-col p-4 overflow-hidden min-h-0">
               <CalendarView events={visibleEvents} completedIds={completedIds}
-                onEventClick={setSelectedEvent} onToggleComplete={handleToggleComplete} />
+                onEventClick={setSelectedEvent} onToggleComplete={handleToggleComplete}
+                onDateDoubleClick={(start, end) => setPendingDate({ start: start.toISOString(), end: end.toISOString() })} />
             </div>
           </>
         ) : (
@@ -202,9 +204,15 @@ export default function App() {
       {selectedEvent && (
         <EventModal event={selectedEvent} calendars={eventCalendars} members={familyMembers} onClose={() => setSelectedEvent(null)} onDelete={handleDeleteEvent} />
       )}
-      {pendingTranscript !== null && (
-        <AddEventModal transcriptText={pendingTranscript || undefined} calendars={eventCalendars}
-          onAdd={handleAddEvent} onClose={() => setPendingTranscript(null)} />
+      {(pendingTranscript !== null || pendingDate !== null) && (
+        <AddEventModal
+          transcriptText={pendingTranscript || undefined}
+          defaultStart={pendingDate?.start}
+          defaultEnd={pendingDate?.end}
+          calendars={eventCalendars}
+          onAdd={handleAddEvent}
+          onClose={() => { setPendingTranscript(null); setPendingDate(null); }}
+        />
       )}
       {schedulingActivity && (
         <ScheduleRoutineModal

@@ -3,6 +3,8 @@ import type { CalendarEvent, CalendarSource } from '../types';
 
 interface AddEventModalProps {
   transcriptText?: string;
+  defaultStart?: string; // ISO string
+  defaultEnd?: string;   // ISO string
   calendars: CalendarSource[];
   onAdd: (event: Omit<CalendarEvent, 'id'>) => void;
   onClose: () => void;
@@ -53,18 +55,26 @@ function parseTranscript(text: string): Partial<CalendarEvent> {
   return result;
 }
 
-export default function AddEventModal({ transcriptText, calendars, onAdd, onClose }: AddEventModalProps) {
+export default function AddEventModal({ transcriptText, defaultStart, defaultEnd, calendars, onAdd, onClose }: AddEventModalProps) {
   const parsed = transcriptText ? parseTranscript(transcriptText) : {};
   const today = new Date();
-  const defaultStart = new Date(today.setHours(9, 0, 0, 0));
-  const defaultEnd = new Date(today.setHours(10, 0, 0, 0));
+  const fallbackStart = new Date(today.setHours(9, 0, 0, 0));
+  const fallbackEnd = new Date(today.setHours(10, 0, 0, 0));
 
   const [title, setTitle] = useState(parsed.title || '');
   const [start, setStart] = useState(
-    (parsed.start ? new Date(parsed.start) : defaultStart).toISOString().slice(0, 16)
+    parsed.start
+      ? new Date(parsed.start).toISOString().slice(0, 16)
+      : defaultStart
+      ? new Date(defaultStart).toISOString().slice(0, 16)
+      : fallbackStart.toISOString().slice(0, 16)
   );
   const [end, setEnd] = useState(
-    (parsed.end ? new Date(parsed.end) : defaultEnd).toISOString().slice(0, 16)
+    parsed.end
+      ? new Date(parsed.end).toISOString().slice(0, 16)
+      : defaultEnd
+      ? new Date(defaultEnd).toISOString().slice(0, 16)
+      : fallbackEnd.toISOString().slice(0, 16)
   );
   const [calendarId, setCalendarId] = useState(calendars[0]?.id || '');
 

@@ -1,9 +1,11 @@
+import { useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import type { EventContentArg } from '@fullcalendar/core';
+import type { DateClickArg } from '@fullcalendar/interaction';
 import type { CalendarEvent } from '../types';
 
 interface CalendarViewProps {
@@ -11,6 +13,7 @@ interface CalendarViewProps {
   completedIds: Set<string>;
   onEventClick: (event: CalendarEvent) => void;
   onToggleComplete: (event: CalendarEvent) => void;
+  onDateDoubleClick: (start: Date, end: Date, allDay: boolean) => void;
 }
 
 function EventContent({ arg, completed, onToggle }: {
@@ -50,7 +53,27 @@ function EventContent({ arg, completed, onToggle }: {
   );
 }
 
-export default function CalendarView({ events, completedIds, onEventClick, onToggleComplete }: CalendarViewProps) {
+export default function CalendarView({ events, completedIds, onEventClick, onToggleComplete, onDateDoubleClick }: CalendarViewProps) {
+  const lastClick = useRef<{ dateStr: string; time: number } | null>(null);
+
+  const handleDateClick = (info: DateClickArg) => {
+    const now = Date.now();
+    if (lastClick.current && lastClick.current.dateStr === info.dateStr && now - lastClick.current.time < 400) {
+      // Double-click detected
+      const start = info.date;
+      const end = new Date(start);
+      if (info.allDay) {
+        end.setDate(end.getDate() + 1);
+      } else {
+        end.setHours(end.getHours() + 1);
+      }
+      onDateDoubleClick(start, end, info.allDay);
+      lastClick.current = null;
+    } else {
+      lastClick.current = { dateStr: info.dateStr, time: now };
+    }
+  };
+
   return (
     <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 overflow-hidden">
       <FullCalendar
@@ -79,6 +102,7 @@ export default function CalendarView({ events, completedIds, onEventClick, onTog
           />
         )}
         eventClick={info => onEventClick(info.event.extendedProps.original as CalendarEvent)}
+        dateClick={handleDateClick}
         height="100%"
         nowIndicator
         slotMinTime="06:00:00"
